@@ -41,6 +41,7 @@ class InstalledSite extends \Flarum\Foundation\InstalledSite {
             $this->container = $this->bootLaravel();
         }
         $container = clone $this->container;
+        \Illuminate\Container\Container::setInstance($this->container);
         return new \Flarum\Foundation\InstalledApp(
             $container,
             $this->config
