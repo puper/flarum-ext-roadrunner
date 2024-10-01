@@ -8,18 +8,61 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Spiral\RoadRunner\Worker;
 use Spiral\RoadRunner\Http\PSR7Worker;
 
+use Illuminate\Support\Arr;
 
+
+class Site extends \Flarum\Foundation\Site {
+    public static function fromPaths(array $paths)
+    {
+        $paths = new \Flarum\Foundation\Paths($paths);
+
+        date_default_timezone_set('UTC');
+
+        if (! static::hasConfigFile($paths->base)) {
+            // Instantiate site instance for new installations,
+            // fallback to localhost for validation of Config for instance in CLI.
+            return new \Flarum\Foundation\UninstalledSite(
+                $paths,
+                Arr::get($_SERVER, 'REQUEST_URI', 'http://localhost')
+            );
+        }
+
+        return (
+            new InstalledSite($paths, static::loadConfig($paths->base))
+        )->extendWith(static::loadExtenders($paths->base));
+    }
+}
+
+class InstalledSite extends \Flarum\Foundation\InstalledSite {
+    public $container;
+    public function bootApp(): \Flarum\Foundation\InstalledApp
+    {
+        if ($this->container === null) {
+            $this->container = $this->bootLaravel();
+        }
+        $container = clone $this->container;
+        return new \Flarum\Foundation\InstalledApp(
+            $container,
+            $this->config
+        );
+    }
+}
+
+// Create new RoadRunner worker from global environment
 $worker = Worker::create();
 
+// Create common PSR-17 HTTP factory
 $factory = new Psr17Factory();
 
 $psr7 = new PSR7Worker($worker, $factory, $factory, $factory);
 
-$handler =  \Flarum\Foundation\Site::fromPaths([
+$site = Site::fromPaths([
     'base' => __DIR__.'/../',
     'public' => __DIR__.'/../public',
     'storage' => __DIR__.'/../storage',
-])->bootApp()->getRequestHandler();
+]);
+$site->bootApp();
+
 while (true) {
     try {
         $request = $psr7->waitRequest();
@@ -27,15 +70,33 @@ while (true) {
             break;
         }
     } catch (\Throwable $e) {
+        // Although the PSR-17 specification clearly states that there can be
+        // no exceptions when creating a request, however, some implementations
+        // may violate this rule. Therefore, it is recommended to process the 
+        // incoming request for errors.
+        //
+        // Send "Bad Request" response.
         $psr7->respond(new Response(400));
         continue;
     }
 
     try {
-        $psrResponse = $handler->handle($request);
+        // Here is where the call to your application code will be located. 
+        // For example:
+        //  $response = $app->send($request);
+        //
+        // Reply by the 200 OK response
+        $psrResponse = $site->bootApp()->getRequestHandler()->handle($request);
         $psr7->respond($psrResponse);
     } catch (\Throwable $e) {
+        // In case of any exceptions in the application code, you should handle
+        // them and inform the client about the presence of a server error.
+        //
+        // Reply by the 500 Internal Server Error response
         $psr7->respond(new Response(500, [], 'Something Went Wrong!'));
+        
+        // Additionally, we can inform the RoadRunner that the processing 
+        // of the request failed.
         $psr7->getWorker()->error((string)$e);
     }
 }

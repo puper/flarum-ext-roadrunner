@@ -29,8 +29,9 @@ Add the following snippet to your `composer.json` file under the `"repositories"
     {
         "type": "path",
         "url": "./roadrunner/worker"
-    }
-]
+    },
+],
+"minimum-stability": "dev"
 ```
 
 This tells Composer to look for local development packages.
