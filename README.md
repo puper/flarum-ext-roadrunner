@@ -14,7 +14,7 @@ Follow these steps to set up `flarum-ext-roadrunner` in your Flarum project.
 
 ### 1. Place Files in Your Flarum Root Directory
 
-Put all extension files into the root directory of your Flarum installation. This will allow the extension to access necessary files and configurations.
+Put `roadrunner` directory into the root directory of your Flarum installation. This will allow the extension to access necessary files and configurations.
 
 ### 2. Download and Install RoadRunner
 
