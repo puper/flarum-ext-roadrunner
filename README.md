@@ -30,6 +30,10 @@ Add the following snippet to your `composer.json` file under the `"repositories"
         "type": "path",
         "url": "./roadrunner/worker"
     },
+    {
+        "type": "path",
+        "url": "./roadrunner/http"
+    }
 ],
 "minimum-stability": "dev"
 ```
