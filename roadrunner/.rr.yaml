@@ -1,0 +1,21 @@
+version: "3"
+
+server:
+  command: "php worker.php"
+
+http:
+  address: 0.0.0.0:8080
+  middleware: [ "static", "headers", "gzip" ]
+  headers:
+    cors:
+      allowed_origin: "*"
+      allowed_headers: "*"
+      allowed_methods: "GET,POST,PUT,DELETE"
+      allow_credentials: true
+      exposed_headers: "Cache-Control,Content-Language,Content-Type,Expires,Last-Modified,Pragma"
+      max_age: 600
+  static:
+    dir: "./../public"
+    forbid: [ ".php" ]
+    calculate_etag: false
+    weak: false
