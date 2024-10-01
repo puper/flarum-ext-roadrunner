@@ -44,7 +44,8 @@ This tells Composer to look for local development packages.
 Run the following command to install RoadRunner and all its dependencies:
 
 ```
-composer require spiral/roadrunner-http "^3" --with-all-dependencies --prefer-source
+composer require nyholm/psr7
+composer require spiral/roadrunner-http "dev-main" --with-all-dependencies --prefer-source
 ```
 This will fetch the required RoadRunner server for Flarum.
 
