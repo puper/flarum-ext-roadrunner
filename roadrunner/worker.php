@@ -10,6 +10,8 @@ use Spiral\RoadRunner\Http\PSR7Worker;
 
 use Illuminate\Support\Arr;
 
+use Psr\Http\Message\StreamInterface;
+
 
 class Site extends \Flarum\Foundation\Site {
     public static function fromPaths(array $paths)
@@ -64,7 +66,17 @@ $site = Site::fromPaths([
 ]);
 $site->bootApp();
 
+$resetExtSeoContainerCallback = function() {
+    static::$container = null;
+};
+
+$resetExtSeoContainer = $resetExtSeoContainerCallback->bindTo(new \V17Development\FlarumSeo\Extend, \V17Development\FlarumSeo\Extend::class);
+
+
 while (true) {
+    if (class_exists(\V17Development\FlarumSeo\Extend::class)) {
+        $resetExtSeoContainer();
+    }
     try {
         $request = $psr7->waitRequest();
         if ($request === null) {
@@ -88,7 +100,14 @@ while (true) {
         //
         // Reply by the 200 OK response
         $psrResponse = $site->bootApp()->getRequestHandler()->handle($request);
-        $psr7->respond($psrResponse);
+        if ($psrResponse instanceof \Laminas\Diactoros\Response\HtmlResponse) {
+            $body = $psrResponse->getBody();
+            $content = $body->getContents();
+            $body->close();
+            $psr7->respond(new Response(200, $psrResponse->getHeaders(),  $content));
+        } else {
+            $psr7->respond($psrResponse);
+        }
     } catch (\Throwable $e) {
         // In case of any exceptions in the application code, you should handle
         // them and inform the client about the presence of a server error.
