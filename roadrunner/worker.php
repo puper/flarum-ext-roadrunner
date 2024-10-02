@@ -100,6 +100,9 @@ while (true) {
         //
         // Reply by the 200 OK response
         $psrResponse = $site->bootApp()->getRequestHandler()->handle($request);
+        $psr7->respond($psrResponse);
+        /**
+         * maybe not required to close?
         if ($psrResponse instanceof \Laminas\Diactoros\Response\HtmlResponse) {
             $body = $psrResponse->getBody();
             $content = $body->getContents();
@@ -108,6 +111,7 @@ while (true) {
         } else {
             $psr7->respond($psrResponse);
         }
+        */
     } catch (\Throwable $e) {
         // In case of any exceptions in the application code, you should handle
         // them and inform the client about the presence of a server error.
