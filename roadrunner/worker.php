@@ -13,7 +13,8 @@ use Illuminate\Support\Arr;
 use Psr\Http\Message\StreamInterface;
 
 
-class Site extends \Flarum\Foundation\Site {
+class Site extends \Flarum\Foundation\Site
+{
     public static function fromPaths(array $paths)
     {
         $paths = new \Flarum\Foundation\Paths($paths);
@@ -35,7 +36,8 @@ class Site extends \Flarum\Foundation\Site {
     }
 }
 
-class InstalledSite extends \Flarum\Foundation\InstalledSite {
+class InstalledSite extends \Flarum\Foundation\InstalledSite
+{
     public $container;
     public function bootApp(): \Flarum\Foundation\InstalledApp
     {
@@ -60,21 +62,23 @@ $factory = new Psr17Factory();
 $psr7 = new PSR7Worker($worker, $factory, $factory, $factory);
 
 $site = Site::fromPaths([
-    'base' => __DIR__.'/../',
-    'public' => __DIR__.'/../public',
-    'storage' => __DIR__.'/../storage',
+    'base' => __DIR__ . '/../',
+    'public' => __DIR__ . '/../public',
+    'storage' => __DIR__ . '/../storage',
 ]);
 $site->bootApp();
 
-$resetExtSeoContainerCallback = function() {
-    static::$container = null;
-};
+$extSeoInstalled = class_exists(\V17Development\FlarumSeo\Extend::class);
+if ($extSeoInstalled) {
+    $resetExtSeoContainerCallback = function () {
+        static::$container = null;
+    };
 
-$resetExtSeoContainer = $resetExtSeoContainerCallback->bindTo(new \V17Development\FlarumSeo\Extend, \V17Development\FlarumSeo\Extend::class);
-
+    $resetExtSeoContainer = $resetExtSeoContainerCallback->bindTo(new \V17Development\FlarumSeo\Extend, \V17Development\FlarumSeo\Extend::class);
+}
 
 while (true) {
-    if (class_exists(\V17Development\FlarumSeo\Extend::class)) {
+    if ($extSeoInstalled) {
         $resetExtSeoContainer();
     }
     try {
@@ -111,14 +115,14 @@ while (true) {
         } else {
             $psr7->respond($psrResponse);
         }
-        */
+         */
     } catch (\Throwable $e) {
         // In case of any exceptions in the application code, you should handle
         // them and inform the client about the presence of a server error.
         //
         // Reply by the 500 Internal Server Error response
         $psr7->respond(new Response(500, [], 'Something Went Wrong!'));
-        
+
         // Additionally, we can inform the RoadRunner that the processing 
         // of the request failed.
         $psr7->getWorker()->error((string)$e);
